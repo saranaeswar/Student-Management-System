@@ -10,6 +10,7 @@ A full-stack Student Management System built with **Flask** + **MongoDB**, deplo
 .
 ├── api/
 │   ├── app.py              ← Flask backend (API routes) with Vercel handler
+│   ├── requirements.txt    ← Python dependencies
 │   ├── templates/
 │   │   └── index.html      ← Main HTML page
 │   └── static/
@@ -17,7 +18,6 @@ A full-stack Student Management System built with **Flask** + **MongoDB**, deplo
 │       │   └── style.css   ← Stylesheet
 │       └── js/
 │           └── main.js     ← Frontend JavaScript
-├── requirements.txt        ← Python dependencies
 ├── vercel.json             ← Vercel deployment config
 └── README.md               ← This file
 ```
