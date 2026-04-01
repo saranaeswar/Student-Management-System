@@ -48,6 +48,10 @@ def delete_student(id):
     students_col.delete_one({"_id": ObjectId(id)})
     return jsonify({"success": True})
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
 @app.route("/api/dbms", methods=["POST"])
 def dbms_console():
     sql = request.json.get("sql", "").strip()
