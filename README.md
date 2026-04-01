@@ -7,7 +7,7 @@ A full-stack Student Management System built with **Flask** + **MongoDB**, deplo
 ## 📁 Folder Structure
 
 ```
-studentbyte/
+.
 ├── app.py                  ← Flask backend (API routes)
 ├── requirements.txt        ← Python dependencies
 ├── vercel.json             ← Vercel deployment config
