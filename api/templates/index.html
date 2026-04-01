@@ -304,7 +304,7 @@
   course VARCHAR(50),
   department VARCHAR(50)
 );
-<button class="copy-btn" onclick="copyToConsole('CREATE TABLE students (\n  name VARCHAR(100),\n  roll VARCHAR(50)\n);')">Use</button></div>
+<button class="copy-btn" onclick="copyToConsole('CREATE TABLE students (\\n  name VARCHAR(100),\\n  roll VARCHAR(50),\\n  phone VARCHAR(20),\\n  email VARCHAR(100),\\n  course VARCHAR(50),\\n  department VARCHAR(50)\\n);')">Use</button></div>
 
           <button class="cs-cmd" onclick="toggleSyntax('ALTER-ADD')">
             <span class="cmd-name">ALTER — Add Column</span><span>▶</span>
@@ -457,6 +457,7 @@ REVOKE ALL ON students FROM user1;
 </div><!-- end page-wrap -->
 
 <script>
+// @ts-nocheck
 let currentFilter = 'active';
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
