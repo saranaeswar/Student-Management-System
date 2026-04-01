@@ -11,6 +11,13 @@ client = MongoClient(MONGO_URI)
 db = client["studentbyte"]
 students_col = db["students"]
 
+# Test connection
+try:
+    client.admin.command('ping')
+    print("MongoDB connected successfully")
+except Exception as e:
+    print(f"MongoDB connection failed: {e}")
+
 def serialize(doc):
     doc["_id"] = str(doc["_id"])
     return doc
@@ -21,32 +28,48 @@ def index():
 
 @app.route("/api/students", methods=["GET"])
 def get_students():
-    filter_type = request.args.get("filter", "all")
-    query = {"status": "active"} if filter_type == "active" else {}
-    docs = [serialize(d) for d in students_col.find(query).sort("created_at", -1)]
-    return jsonify(docs)
+    try:
+        filter_type = request.args.get("filter", "all")
+        query = {"status": "active"} if filter_type == "active" else {}
+        docs = [serialize(d) for d in students_col.find(query).sort("created_at", -1)]
+        return jsonify(docs)
+    except Exception as e:
+        print(f"Error in get_students: {e}")
+        return jsonify({"error": "Database error"}), 500
 
 @app.route("/api/students", methods=["POST"])
 def add_student():
-    data = request.json
-    data["status"] = "active"
-    data["created_at"] = datetime.utcnow().isoformat()
-    result = students_col.insert_one(data)
-    data["_id"] = str(result.inserted_id)
-    return jsonify({"success": True, "student": data}), 201
+    try:
+        data = request.json
+        data["status"] = "active"
+        data["created_at"] = datetime.utcnow().isoformat()
+        result = students_col.insert_one(data)
+        data["_id"] = str(result.inserted_id)
+        return jsonify({"success": True, "student": data}), 201
+    except Exception as e:
+        print(f"Error in add_student: {e}")
+        return jsonify({"error": "Database error"}), 500
 
 @app.route("/api/students/<id>", methods=["PUT"])
 def update_student(id):
-    data = request.json
-    data.pop("_id", None)
-    students_col.update_one({"_id": ObjectId(id)}, {"$set": data})
-    updated = serialize(students_col.find_one({"_id": ObjectId(id)}))
-    return jsonify({"success": True, "student": updated})
+    try:
+        data = request.json
+        data.pop("_id", None)
+        students_col.update_one({"_id": ObjectId(id)}, {"$set": data})
+        updated = serialize(students_col.find_one({"_id": ObjectId(id)}))
+        return jsonify({"success": True, "student": updated})
+    except Exception as e:
+        print(f"Error in update_student: {e}")
+        return jsonify({"error": "Database error"}), 500
 
 @app.route("/api/students/<id>", methods=["DELETE"])
 def delete_student(id):
-    students_col.delete_one({"_id": ObjectId(id)})
-    return jsonify({"success": True})
+    try:
+        students_col.delete_one({"_id": ObjectId(id)})
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error in delete_student: {e}")
+        return jsonify({"error": "Database error"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
