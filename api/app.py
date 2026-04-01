@@ -1,26 +1,61 @@
 from flask import Flask, render_template, request, jsonify
-from pymongo import MongoClient
-from bson import ObjectId
+from sqlalchemy import create_engine, Column, String, Text, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(MONGO_URI)
-db = client["studentbyte"]
-students_col = db["students"]
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///students.db")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+class Student(Base):
+    __tablename__ = "students"
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, index=True)
+    roll = Column(String, unique=True, index=True)
+    phone = Column(String)
+    email = Column(String)
+    course = Column(String)
+    department = Column(String)
+    notes = Column(Text)
+    status = Column(String, default="active")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        return db
+    finally:
+        db.close()
 
 # Test connection
 try:
-    client.admin.command('ping')
-    print("MongoDB connected successfully")
+    db = get_db()
+    db.execute("SELECT 1")
+    print("Database connected successfully")
 except Exception as e:
-    print(f"MongoDB connection failed: {e}")
+    print(f"Database connection failed: {e}")
 
-def serialize(doc):
-    doc["_id"] = str(doc["_id"])
-    return doc
+def serialize(student):
+    return {
+        "_id": student.id,
+        "name": student.name,
+        "roll": student.roll,
+        "phone": student.phone,
+        "email": student.email,
+        "course": student.course,
+        "department": student.department,
+        "notes": student.notes,
+        "status": student.status,
+        "created_at": student.created_at.isoformat() if student.created_at else None
+    }
 
 @app.route("/")
 def index():
@@ -29,10 +64,13 @@ def index():
 @app.route("/api/students", methods=["GET"])
 def get_students():
     try:
+        db = get_db()
         filter_type = request.args.get("filter", "all")
-        query = {"status": "active"} if filter_type == "active" else {}
-        docs = [serialize(d) for d in students_col.find(query).sort("created_at", -1)]
-        return jsonify(docs)
+        query = db.query(Student)
+        if filter_type == "active":
+            query = query.filter(Student.status == "active")
+        students = query.order_by(Student.created_at.desc()).all()
+        return jsonify([serialize(s) for s in students])
     except Exception as e:
         print(f"Error in get_students: {e}")
         return jsonify({"error": "Database error"}), 500
@@ -41,11 +79,24 @@ def get_students():
 def add_student():
     try:
         data = request.json
-        data["status"] = "active"
-        data["created_at"] = datetime.utcnow().isoformat()
-        result = students_col.insert_one(data)
-        data["_id"] = str(result.inserted_id)
-        return jsonify({"success": True, "student": data}), 201
+        db = get_db()
+        import uuid
+        student = Student(
+            id=str(uuid.uuid4()),
+            name=data.get("name"),
+            roll=data.get("roll"),
+            phone=data.get("phone"),
+            email=data.get("email"),
+            course=data.get("course"),
+            department=data.get("department"),
+            notes=data.get("notes"),
+            status="active",
+            created_at=datetime.utcnow()
+        )
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        return jsonify({"success": True, "student": serialize(student)}), 201
     except Exception as e:
         print(f"Error in add_student: {e}")
         return jsonify({"error": "Database error"}), 500
@@ -54,10 +105,16 @@ def add_student():
 def update_student(id):
     try:
         data = request.json
-        data.pop("_id", None)
-        students_col.update_one({"_id": ObjectId(id)}, {"$set": data})
-        updated = serialize(students_col.find_one({"_id": ObjectId(id)}))
-        return jsonify({"success": True, "student": updated})
+        db = get_db()
+        student = db.query(Student).filter(Student.id == id).first()
+        if not student:
+            return jsonify({"error": "Student not found"}), 404
+        for key, value in data.items():
+            if key != "_id" and hasattr(student, key):
+                setattr(student, key, value)
+        db.commit()
+        db.refresh(student)
+        return jsonify({"success": True, "student": serialize(student)})
     except Exception as e:
         print(f"Error in update_student: {e}")
         return jsonify({"error": "Database error"}), 500
@@ -65,7 +122,12 @@ def update_student(id):
 @app.route("/api/students/<id>", methods=["DELETE"])
 def delete_student(id):
     try:
-        students_col.delete_one({"_id": ObjectId(id)})
+        db = get_db()
+        student = db.query(Student).filter(Student.id == id).first()
+        if not student:
+            return jsonify({"error": "Student not found"}), 404
+        db.delete(student)
+        db.commit()
         return jsonify({"success": True})
     except Exception as e:
         print(f"Error in delete_student: {e}")
