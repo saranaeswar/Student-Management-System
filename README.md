@@ -8,7 +8,8 @@ A full-stack Student Management System built with **Flask** + **MongoDB**, deplo
 
 ```
 .
-├── app.py                  ← Flask backend (API routes)
+├── api/
+│   └── app.py              ← Flask backend (API routes) with Vercel handler
 ├── requirements.txt        ← Python dependencies
 ├── vercel.json             ← Vercel deployment config
 ├── templates/

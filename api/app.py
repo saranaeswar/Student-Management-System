@@ -52,6 +52,10 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
+# For Vercel serverless
+from vercel_wsgi import make_handler
+handler = make_handler(app)
+
 @app.route("/api/dbms", methods=["POST"])
 def dbms_console():
     sql = request.json.get("sql", "").strip()
