@@ -9,16 +9,17 @@ A full-stack Student Management System built with **Flask** + **MongoDB**, deplo
 ```
 .
 ├── api/
-│   └── app.py              ← Flask backend (API routes) with Vercel handler
+│   ├── app.py              ← Flask backend (API routes) with Vercel handler
+│   ├── templates/
+│   │   └── index.html      ← Main HTML page
+│   └── static/
+│       ├── css/
+│       │   └── style.css   ← Stylesheet
+│       └── js/
+│           └── main.js     ← Frontend JavaScript
 ├── requirements.txt        ← Python dependencies
 ├── vercel.json             ← Vercel deployment config
-├── templates/
-│   └── index.html          ← Main HTML page
-└── static/
-    ├── css/
-    │   └── style.css       ← Stylesheet
-    └── js/
-        └── main.js         ← Frontend JavaScript
+└── README.md               ← This file
 ```
 
 ---
