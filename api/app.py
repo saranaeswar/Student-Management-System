@@ -4,7 +4,7 @@ from bson import ObjectId
 from datetime import datetime
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
